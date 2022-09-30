@@ -20,6 +20,13 @@ app.set('views', 'views');
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: 'notagoodsecret' }));
 
+const requireLogin = (req, res, next) => {
+    if (!req.session.user_id) {
+        return res.redirect('/login')
+    }
+    next();
+}
+
 app.get('/', (req, res) => {
     res.send('THIS IS THE HOME PAGE!')
 })
@@ -70,20 +77,31 @@ app.post('/login', async (req, res) => {
 
 app.post('/logout', (req, res) => {
     // is usually enough
-    // req.session.user_id = null;
+    req.session.user_id = null;
     // destroys the whole session id
-    req.session.destroy();
+    // req.session.destroy();
     res.redirect('/login');
 })
 
-app.get('/secret', (req, res) => {
-    if (!req.session.user_id) {
-        return res.redirect('/login')
-    }
-    // for testing it works first
-    // res.send('THIS IS SECRET! YOU CANNOT SEE ME UNLESS YOU ARE LOGGED IN!')
+
+// using middleware requireLogin (created above)
+app.get('/secret', requireLogin, (req, res) => {
     res.render('secret')
 })
+
+app.get('/topsecret', requireLogin, (req, res) => {
+    res.send('TOP SECRET!!!!!')
+})
+
+// without middleware requireLogin
+// app.get('/secret', (req, res) => {
+//     if (!req.session.user_id) {
+//         return res.redirect('/login')
+//     }
+//     // for testing it works first
+//     // res.send('THIS IS SECRET! YOU CANNOT SEE ME UNLESS YOU ARE LOGGED IN!')
+//     res.render('secret')
+// })
 
 app.listen(3000, () => {
     console.log("SERVING YOUR APP!")
