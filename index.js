@@ -35,45 +35,70 @@ app.get('/register', (req, res) => {
     res.render('register')
 })
 
+
 app.post('/register', async (req, res) => {
-    // check whether it is working - ultimatley you never want to do this
-    // res.send(req.body)
     const { password, username } = req.body;
-    const hash = await bcrypt.hash(password, 12);
-    const user = new User({
-        username,
-        password: hash
-    })
+    const user = new User({ username, password })
     await user.save();
     // session cookie remembering the successfully logged in user (same for register)
     req.session.user_id = user._id;
-    // Checking whether the encryption worked
-    // res.send(hash);
     res.redirect('/')
 })
+
+// Version without user model method to hash 
+// app.post('/register', async (req, res) => {
+//     // check whether it is working - ultimatley you never want to do this
+//     // res.send(req.body)
+//     const { password, username } = req.body;
+//     const hash = await bcrypt.hash(password, 12);
+//     const user = new User({
+//         username,
+//         password: hash
+//     })
+//     await user.save();
+//     // session cookie remembering the successfully logged in user (same for register)
+//     req.session.user_id = user._id;
+//     // Checking whether the encryption worked
+//     // res.send(hash);
+//     res.redirect('/')
+// })
 
 app.get('/login', (req, res) => {
     res.render('login')
 })
 
 app.post('/login', async (req, res) => {
-    // first step to see whether its working
-    // res.send(req.body)
     const { username, password } = req.body;
-    const user = await User.findOne({ username });
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (validPassword) {
+    const foundUser = await User.findAndValidate(username, password);
+    if (foundUser) {
         // session cookie remembering the successfully logged in user (same for register)
-        req.session.user_id = user._id;
-        // to check whether it works first
-        // res.send("YAY!!! WELCOME!!!")
+        req.session.user_id = foundUser._id;
         res.redirect('/secret');
     } else {
-        // to check whether it works first
-        // res.send("TRY AGAIN")
         res.redirect('/login');
     }
 })
+
+
+// First Version, without static method on user model
+// app.post('/login', async (req, res) => {
+//     // first step to see whether its working
+//     // res.send(req.body)
+//     const { username, password } = req.body;
+//     const user = await User.findOne({ username });
+//     const validPassword = await bcrypt.compare(password, user.password);
+//     if (validPassword) {
+//         // session cookie remembering the successfully logged in user (same for register)
+//         req.session.user_id = user._id;
+//         // to check whether it works first
+//         // res.send("YAY!!! WELCOME!!!")
+//         res.redirect('/secret');
+//     } else {
+//         // to check whether it works first
+//         // res.send("TRY AGAIN")
+//         res.redirect('/login');
+//     }
+// })
 
 app.post('/logout', (req, res) => {
     // is usually enough
